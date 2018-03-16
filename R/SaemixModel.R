@@ -585,6 +585,7 @@ setMethod("plot","SaemixModel",
 #' 
 #' @export saemixModel
 saemixModel<-function(model,psi0,description="", type ="",error.model=character(), transform.par=numeric(),fixed.estim=numeric(),covariate.model=matrix(nrow=0,ncol=0), covariance.model=matrix(nrow=0,ncol=0),omega.init=matrix(nrow=0,ncol=0),error.init=numeric(), name.modpar=character()) {
+covariate.model <- matrix(covariate.model,ncol=ncol(psi0))
 # Creating model from class
   if(missing(model)) {
     cat("Error in saemixModel:\n   The model must be a function, accepting 3 arguments: psi (a vector of parameters), id (a vector of indices) and xidep (a matrix of predictors). Please see the documentation for examples.\n")
