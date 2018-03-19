@@ -8,7 +8,7 @@
 #' algorithm proposed by Kuhn and Lavielle (see reference). Details of the
 #' algorithm can be found in the pdf file accompanying the package.
 #' 
-#' @name saemix
+#' @name saemixB
 #' @aliases initialiseMainAlgo mstep estep
 #' 
 #' @param model an object of class SaemixModel, created by a call to the
@@ -55,6 +55,7 @@
 #' 
 #' saemix.model<-saemixModel(model=model1cpt,
 #'   description="One-compartment model with first-order absorption", 
+#'   type="structural",
 #'   psi0=matrix(c(1.,20,0.5,0.1,0,-0.01),ncol=3, byrow=TRUE,
 #'   dimnames=list(NULL, c("ka","V","CL"))),transform.par=c(1,1,1),
 #'   covariate.model=matrix(c(0,1,0,0,0,0),ncol=3,byrow=TRUE),fixed.estim=c(1,1,1),
@@ -201,7 +202,7 @@ for (kiter in 1:saemix.options$nbiter.tot) { # Iterative portion of algorithm
 
 	# E-step
   
-  xmcmc<-estep(kiter, Uargs, Dargs, opt, structural.model, mean.phi, varList, DYF, phiM)
+  xmcmc<-estep(kiter, Uargs, Dargs, opt, structural.model, mean.phi, varList, DYF, phiM,saemixObject)
   varList<-xmcmc$varList
   DYF<-xmcmc$DYF
   phiM<-xmcmc$phiM

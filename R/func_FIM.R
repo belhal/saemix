@@ -64,6 +64,7 @@
 #' 
 #' saemix.model<-saemixModel(model=model1cpt,
 #'   description="One-compartment model with first-order absorption", 
+#'   type="structural",
 #'   psi0=matrix(c(1.,20,0.5,0.1,0,-0.01),ncol=3, byrow=TRUE,
 #'   dimnames=list(NULL, c("ka","V","CL"))),transform.par=c(1,1,1), 
 #'   covariate.model=matrix(c(0,1,0,0,0,0),ncol=3,byrow=TRUE),fixed.estim=c(1,1,1),
@@ -257,7 +258,9 @@ fim.saemix<-function(saemixObject) {
   # ECO TODO : pourquoi negatif ??? FIM = -fim calculee ici ?
   saemix.res["se.fixed"]<-se.fixed
   saemix.res["se.omega"]<-c(se.omega)
-  saemix.res["se.respar"]<-c(se.res)
+  if (saemixObject["model"]["type"]=="structural"){
+    saemix.res["se.respar"]<-c(se.res)
+  }
   saemix.res["ll.lin"]<-c(ll.lin )
   saemix.res["fim"]<-fim
   saemix.res["aic.lin"]<-(-2)*saemix.res["ll.lin"]+ 2*saemix.res["npar.est"]

@@ -46,6 +46,7 @@
 #' 
 #' saemix.model<-saemixModel(model=model1cpt,
 #'   description="One-compartment model with first-order absorption", 
+#'   type="structural",
 #'   psi0=matrix(c(1.,20,0.5,0.1,0,-0.01),ncol=3, byrow=TRUE,
 #'   dimnames=list(NULL, c("ka","V","CL"))),transform.par=c(1,1,1),
 #'   covariate.model=matrix(c(0,1,0,0,0,0),ncol=3,byrow=TRUE),fixed.estim=c(1,1,1),
@@ -370,7 +371,7 @@ compute.LLy_c<-function(phiM,pres,args,Dargs,DYF) {
 compute.LLy_d<-function(phiM,args,Dargs,DYF) {
   psiM<-transphi(phiM,Dargs$transform.par)
   fpred<-Dargs$structural.model(psiM, Dargs$IdM, Dargs$XM)
-  DYF[args$ind.ioM]<- fpred
+  DYF[args$ind.ioM]<- -log(fpred)
   U<-colSums(DYF)
   return(U)
 }
