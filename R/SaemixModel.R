@@ -327,7 +327,7 @@ setMethod("print","SaemixModel",
 #    try(colnames(tab)<-rownames(tab)<-x@name.modpar)
     print(tab,quote=FALSE)
     st1<-paste(x@name.res,x@error.init,sep="=")
-    cat("  Error model:",x@error.model,", initial values:",st1[x@indx.res],"\n")
+    if(x@type=="structural") cat("  Error model:",x@error.model,", initial values:",st1[x@indx.res],"\n")
    if(dim(x@covariate.model)[1]>0) {
       cat("  Covariate model:")
       if(sum(x@covariate.model)==0) cat(" none\n") else {
