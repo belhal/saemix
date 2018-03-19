@@ -152,7 +152,7 @@ llis.saemix<-function(saemixObject) {
 	
 	x1<-MM*c(kmin:KM)
 	y1<-(-2)*LL[kmin:KM]
-	if(sum(!is.na(y1))) try(plot(x1,y1,type="l",xlab="Size of the Monte-Carlo sample", ylab="'-2xLog-Likelihood",main=tit)) else cat("Likelihood cannot be computed by Importance Sampling.\n")
+	if(saemixObject["options"]$print.is) if(sum(!is.na(y1))) try(plot(x1,y1,type="l",xlab="Size of the Monte-Carlo sample", ylab="'-2xLog-Likelihood",main=tit)) else cat("Likelihood cannot be computed by Importance Sampling.\n")
 	
 	saemixObject["results"]["LL"]<-c(LL)
 	saemixObject["results"]["ll.is"]<-LL[KM]
