@@ -61,9 +61,9 @@
 #' Marc Lavielle.
 #' @seealso \code{\link{SaemixData}},\code{\link{SaemixModel}},
 #' \code{\link{SaemixObject}},\code{\link{saemixControl}},\code{\link{saemix}}
-#' @references Kuhn E, Lavielle M. Maximum likelihood estimation in nonlinear
-#' mixed effects models. Computational Statistics and Data Analysis 49, 4
-#' (2005), 1020-1038.
+#' @references Comets  E, Lavenu A, Lavielle M. Parameter estimation in nonlinear mixed effect models using saemix, an R implementation of the SAEM algorithm. Journal of Statistical Software 80, 3 (2017), 1-41.
+#' 
+#' Kuhn E, Lavielle M. Maximum likelihood estimation in nonlinear mixed effects models. Computational Statistics and Data Analysis 49, 4 (2005), 1020-1038.
 #' 
 #' Comets E, Lavenu A, Lavielle M. SAEMIX, an R version of the SAEM algorithm.
 #' 20th meeting of the Population Approach Group in Europe, Athens, Greece
@@ -92,7 +92,6 @@
 #' 
 #' saemix.model<-saemixModel(model=model1cpt,
 #'   description="One-compartment model with first-order absorption", 
-#'   type="structural",
 #'   psi0=matrix(c(1.,20,0.5,0.1,0,-0.01),ncol=3, byrow=TRUE,dimnames=list(NULL, 
 #'   c("ka","V","CL"))),transform.par=c(1,1,1), 
 #'   covariate.model=matrix(c(0,1,0,0,0,0),ncol=3,byrow=TRUE),fixed.estim=c(1,1,1),
@@ -119,7 +118,9 @@ conddist.saemix<-function(saemixObject,nsamp=1,max.iter=NULL,...) {
   # nsamp= number of MCMC samples
   # kmax= max nb of iterations
   # returns an array 
-  N<-saemixObject["data"]["N"]
+  saemix.data<-saemixObject["data"]
+  saemix.model<-saemixObject["model"]
+  N<-saemix.data["N"]
   nb.parameters<-saemixObject["model"]["nb.parameters"]
   if(is.null(max.iter)) kmax<-sum(saemixObject["options"]$nbiter.saemix)*2 else kmax<-max.iter
   # using several Markov chains
@@ -127,7 +128,7 @@ conddist.saemix<-function(saemixObject,nsamp=1,max.iter=NULL,...) {
   NM<-chdat["NM"]
   IdM<-chdat["dataM"]$IdM
   yM<-chdat["dataM"]$yM
-  XM<-chdat["dataM"][,saemixObject["data"]["name.predictors"],drop=FALSE]
+  XM<-chdat["dataM"][,c(saemix.data["name.predictors"],saemix.data["name.cens"],saemix.data["name.mdv"],saemix.data["name.ytype"]),drop=FALSE]
   io<-matrix(data=0,nrow=N,ncol=max(saemixObject["data"]["nind.obs"]))
   for(i in 1:N)
     io[i,1:saemixObject["data"]["nind.obs"][i]]<-1
@@ -176,18 +177,16 @@ conddist.saemix<-function(saemixObject,nsamp=1,max.iter=NULL,...) {
   phiM<-do.call(rbind,rep(list(saemixObject["results"]["cond.mean.phi"]),nsamp))
   etaM<-phiM[,ind.eta]-mean.phiM[,ind.eta]  
   psiM<-transphi(phiM,saemixObject["model"]["transform.par"])
-  if(saemixObject["model"]["type"]=="structural"){
-    fpred<-saemixObject["model"]["model"](psiM, IdM, XM)
-    if(saemixObject["model"]["error.model"]=="exponential")
-      fpred<-log(cutoff(fpred))
-    gpred<-error(fpred,pres)
+  fpred<-saemixObject["model"]["model"](psiM, IdM, XM)
+  ind.exp<-which(saemix.model["error.model"]=="exponential")
+  for(ityp in ind.exp) fpred[XM$ytype==ityp]<-log(cutoff(fpred[XM$ytype==ityp]))
+  if (saemixObject["model"]["type"]=="structural"){  
+    gpred<-error(fpred,pres,XM$ytype)
     DYF[ind.ioM]<-0.5*((yM-fpred)/gpred)^2+log(gpred)
-    U.y<-colSums(DYF)
-  } else{
-    fpred<-saemixObject["model"]["model"](psiM, IdM, XM)
+  } else {
     DYF[ind.ioM]<- -fpred
-    U.y<-colSums(DYF)
   }
+  U.y<-colSums(DYF)
   phiMc<-phiM
   
   econd<-sdcond<-array(0,dim=c(nb.parameters,N*kmax,nsamp)) # parametres individuels
@@ -200,18 +199,15 @@ conddist.saemix<-function(saemixObject,nsamp=1,max.iter=NULL,...) {
       etaMc<-matrix(rnorm(NM*nb.etas),ncol=nb.etas)%*%chol.omega
       phiMc[,ind.eta]<-mean.phiM[,ind.eta]+etaMc
       psiMc<-transphi(phiMc,saemixObject["model"]["transform.par"])
-      if(saemixObject["model"]["type"]=="structural"){
-        fpred<-saemixObject["model"]["model"](psiMc, IdM, XM)
-        if(saemixObject["model"]["error.model"]=="exponential")
-          fpred<-log(cutoff(fpred))
-        gpred<-error(fpred,pres)
+      fpred<-saemixObject["model"]["model"](psiMc, IdM, XM)
+      for(ityp in ind.exp) fpred[XM$ytype==ityp]<-log(cutoff(fpred[XM$ytype==ityp]))
+      if (saemixObject["model"]["type"]=="structural"){  
+        gpred<-error(fpred,pres,XM$ytype)
         DYF[ind.ioM]<-0.5*((yM-fpred)/gpred)^2+log(gpred)
-        Uc.y<-colSums(DYF)
-      } else{
-        fpred<-saemixObject["model"]["model"](psiMc, IdM, XM)
+      } else {
         DYF[ind.ioM]<- -fpred
-        Uc.y<-colSums(DYF)
       }
+      Uc.y<-colSums(DYF)
       deltau<-Uc.y-U.y
       ind<-which(deltau<(-1)*log(runif(NM)))
       etaM[ind,]<-etaMc[ind,]
@@ -231,18 +227,15 @@ conddist.saemix<-function(saemixObject,nsamp=1,max.iter=NULL,...) {
           etaMc[,vk2]<-etaM[,vk2]+matrix(rnorm(NM*nrs2), ncol=nrs2)%*%mydiag(domega2[vk2,nrs2],nrow=1) # 2e noyau ? ou 1er noyau+permutation?
           phiMc[,ind.eta]<-mean.phiM[,ind.eta]+etaMc
           psiMc<-transphi(phiMc,saemixObject["model"]["transform.par"])
-          if(saemixObject["model"]["type"]=="structural"){
-            fpred<-saemixObject["model"]["model"](psiMc, IdM, XM)
-            if(saemixObject["model"]["error.model"]=="exponential")
-              fpred<-log(cutoff(fpred))
-            gpred<-error(fpred,pres)
+          fpred<-saemixObject["model"]["model"](psiMc, IdM, XM)
+          for(ityp in ind.exp) fpred[XM$ytype==ityp]<-log(cutoff(fpred[XM$ytype==ityp]))
+          if (saemixObject["model"]["type"]=="structural"){  
+            gpred<-error(fpred,pres,XM$ytype)
             DYF[ind.ioM]<-0.5*((yM-fpred)/gpred)^2+log(gpred)
-            Uc.y<-colSums(DYF)
-          } else{
-            fpred<-saemixObject["model"]["model"](psiMc, IdM, XM)
+          } else {
             DYF[ind.ioM]<- -fpred
-            Uc.y<-colSums(DYF)
           }
+          Uc.y<-colSums(DYF) # Warning: Uc.y, Uc.eta = vecteurs
           Uc.eta<-0.5*rowSums(etaMc*(etaMc%*%solve(omega.eta)))
           deltu<-Uc.y-U.y+Uc.eta-U.eta
           ind<-which(deltu<(-1)*log(runif(NM)))
@@ -274,18 +267,15 @@ conddist.saemix<-function(saemixObject,nsamp=1,max.iter=NULL,...) {
           etaMc[,vk2]<-etaM[,vk2]+matrix(rnorm(NM*nrs2), ncol=nrs2)%*%mydiag(domega2[vk2,nrs2])
           phiMc[,ind.eta]<-mean.phiM[,ind.eta]+etaMc
           psiMc<-transphi(phiMc,saemixObject["model"]["transform.par"])
-          if(saemixObject["model"]["type"]=="structural"){
-            fpred<-saemixObject["model"]["model"](psiMc, IdM, XM)
-            if(saemixObject["model"]["error.model"]=="exponential")
-              fpred<-log(cutoff(fpred))
-            gpred<-error(fpred,pres)
+          fpred<-saemixObject["model"]["model"](psiMc, IdM, XM)
+          for(ityp in ind.exp) fpred[XM$ytype==ityp]<-log(cutoff(fpred[XM$ytype==ityp]))
+          if (saemixObject["model"]["type"]=="structural"){  
+            gpred<-error(fpred,pres,XM$ytype)
             DYF[ind.ioM]<-0.5*((yM-fpred)/gpred)^2+log(gpred)
-            Uc.y<-colSums(DYF)
-          } else{
-            fpred<-saemixObject["model"]["model"](psiMc, IdM, XM)
+          } else {
             DYF[ind.ioM]<- -fpred
-            Uc.y<-colSums(DYF)
           }
+          Uc.y<-colSums(DYF) # Warning: Uc.y, Uc.eta = vecteurs
           Uc.eta<-0.5*rowSums(etaMc*(etaMc%*%solve(omega.eta)))
           deltu<-Uc.y-U.y+Uc.eta-U.eta
           ind<-which(deltu<(-log(runif(NM))))

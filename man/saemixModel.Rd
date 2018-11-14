@@ -4,11 +4,13 @@
 \alias{saemixModel}
 \title{Function to create a SaemixModel object}
 \usage{
-saemixModel(model, psi0, description = "", type = "",
-  error.model = character(), transform.par = numeric(),
-  fixed.estim = numeric(), covariate.model = matrix(nrow = 0, ncol = 0),
-  covariance.model = matrix(nrow = 0, ncol = 0), omega.init = matrix(nrow =
-  0, ncol = 0), error.init = numeric(), name.modpar = character())
+saemixModel(model, psi0, description = "", name.response = "",
+  name.sigma = character(), error.model = character(),
+  transform.par = numeric(), fixed.estim = numeric(),
+  covariate.model = matrix(nrow = 0, ncol = 0),
+  covariance.model = matrix(nrow = 0, ncol = 0),
+  omega.init = matrix(nrow = 0, ncol = 0), error.init = numeric(),
+  name.modpar = character(), verbose = TRUE)
 }
 \arguments{
 \item{model}{name of the function used to compute the structural model. The
@@ -28,7 +30,9 @@ named vector.}
 \item{description}{a character string, giving a brief description of the
 model or the analysis}
 
-\item{type}{a character string, giving model type}
+\item{name.response}{the name of the dependent variable}
+
+\item{name.sigma}{a vector of character string giving the names of the residual error parameters}
 
 \item{error.model}{type of residual error model (valid types are constant,
 proportional, combined and exponential). Defaults to constant}
@@ -58,6 +62,8 @@ model}
 
 \item{name.modpar}{names of the model parameters, if they are not given as
 the column names (or names) of psi0}
+
+\item{verbose}{a boolean, controlling whether information about the created should be printed out. Defaults to TRUE}
 }
 \value{
 A SaemixModel object (see \code{\link{saemixModel}}).
@@ -96,9 +102,9 @@ saemix.model<-saemixModel(model=model1cpt,
 
 }
 \references{
-Kuhn E, Lavielle M. Maximum likelihood estimation in nonlinear
-mixed effects models. Computational Statistics and Data Analysis 49, 4
-(2005), 1020-1038.
+Comets  E, Lavenu A, Lavielle M. Parameter estimation in nonlinear mixed effect models using saemix, an R implementation of the SAEM algorithm. Journal of Statistical Software 80, 3 (2017), 1-41.
+
+Kuhn E, Lavielle M. Maximum likelihood estimation in nonlinear mixed effects models. Computational Statistics and Data Analysis 49, 4 (2005), 1020-1038.
 
 Comets E, Lavenu A, Lavielle M. SAEMIX, an R version of the SAEM algorithm.
 20th meeting of the Population Approach Group in Europe, Athens, Greece

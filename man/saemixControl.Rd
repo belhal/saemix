@@ -10,9 +10,9 @@ saemixControl(map = TRUE, fim = TRUE, ll.is = TRUE, ll.gq = FALSE,
   nbdisplay = 100, displayProgress = TRUE, nbiter.burn = 5,
   nbiter.mcmc = c(2, 2, 2), proba.mcmc = 0.4, stepsize.rw = 0.4,
   rw.init = 0.5, alpha.sa = 0.97, nnodes.gq = 12, nsd.gq = 4,
-  maxim.maxiter = 100, nb.sim = 1000, nb.simpred = 100, ipar.lmcmc = 50,
-  ipar.rmcmc = 0.05, print = TRUE, save = TRUE, save.graphs = TRUE,
-  directory = "newdir", warnings = FALSE)
+  maxim.maxiter = 100, nb.sim = 1000, nb.simpred = 100,
+  ipar.lmcmc = 50, ipar.rmcmc = 0.05, print = TRUE, save = TRUE,
+  save.graphs = TRUE, directory = "newdir", warnings = FALSE)
 }
 \arguments{
 \item{map}{a boolean specifying whether to estimate the individual parameters (MAP estimates). Defaults to TRUE}
@@ -103,8 +103,7 @@ saved to files. Defaults to TRUE}
 \item{directory}{the directory in which to save the results. Defaults to
 "newdir" in the current directory}
 
-\item{warnings}{whether warnings should be output during the fit. Defaults
-to FALSE}
+\item{warnings}{whether warnings should be output during the fit. Defaults to FALSE}
 }
 \description{
 List containing the variables relative to the optimisation algorithm. All
@@ -134,9 +133,9 @@ saemix.options<-saemixControl(seed=632545)
 
 }
 \references{
-Kuhn E, Lavielle M. Maximum likelihood estimation in nonlinear
-mixed effects models. Computational Statistics and Data Analysis 49, 4
-(2005), 1020-1038.
+Comets  E, Lavenu A, Lavielle M. Parameter estimation in nonlinear mixed effect models using saemix, an R implementation of the SAEM algorithm. Journal of Statistical Software 80, 3 (2017), 1-41.
+
+Kuhn E, Lavielle M. Maximum likelihood estimation in nonlinear mixed effects models. Computational Statistics and Data Analysis 49, 4 (2005), 1020-1038.
 
 Comets E, Lavenu A, Lavielle M. SAEMIX, an R version of the SAEM algorithm.
 20th meeting of the Population Approach Group in Europe, Athens, Greece

@@ -14,9 +14,9 @@
 #' Marc Lavielle.
 #' @seealso
 #' \code{\link{SaemixObject}},\code{\link{saemix}},\code{\link{llgq.saemix}}
-#' @references Kuhn E, Lavielle M. Maximum likelihood estimation in nonlinear
-#' mixed effects models. Computational Statistics and Data Analysis 49, 4
-#' (2005), 1020-1038.
+#' @references Comets  E, Lavenu A, Lavielle M. Parameter estimation in nonlinear mixed effect models using saemix, an R implementation of the SAEM algorithm. Journal of Statistical Software 80, 3 (2017), 1-41.
+#' 
+#' Kuhn E, Lavielle M. Maximum likelihood estimation in nonlinear mixed effects models. Computational Statistics and Data Analysis 49, 4 (2005), 1020-1038.
 #' 
 #' Comets E, Lavenu A, Lavielle M. SAEMIX, an R version of the SAEM algorithm.
 #' 20th meeting of the Population Approach Group in Europe, Athens, Greece
@@ -42,7 +42,7 @@
 #' 	  return(ypred)
 #' }
 #' saemix.model<-saemixModel(model=model1cpt,
-#'   description="One-compartment model with first-order absorption", 
+#'   description="One-compartment model with first-order absorption", type="structural",
 #'   psi0=matrix(c(1.,20,0.5,0.1,0,-0.01),ncol=3, byrow=TRUE,
 #'   dimnames=list(NULL, c("ka","V","CL"))),transform.par=c(1,1,1),
 #'   covariate.model=matrix(c(0,1,0,0,0,0),ncol=3,byrow=TRUE),fixed.estim=c(1,1,1),
@@ -69,7 +69,7 @@ llis.saemix<-function(saemixObject) {
 	ncov<-length(saemix.data)["name.covariates"]
 	npred<-length(saemix.data["name.predictors"])
 	yobs<-saemix.data["data"][,saemix.data["name.response"]]
-	xind<-saemix.data["data"][,saemix.data["name.predictors"],drop=FALSE]
+	xind<-saemix.data["data"][,c(saemix.data["name.predictors"],saemix.data["name.cens"],saemix.data["name.mdv"],saemix.data["name.ytype"]),drop=FALSE]
 	
 	i1.omega2<-saemix.model["indx.omega"]
 	Omega<-saemix.res["omega"]
@@ -83,11 +83,15 @@ llis.saemix<-function(saemixObject) {
 	MM<-100
 	KM<-round(saemixObject["options"]$nmc.is/MM)
 	log.const<-0
-	if(saemix.model["error.model"]=="exponential")
-		log.const<-(-sum(yobs))
+	idx.exp<-which(saemixObject["model"]["error.model"]=="exponential")
+	if(length(idx.exp)>0)
+	  #	if(saemixObject["model"]["error.model"]=="exponential")
+	  log.const<-(-sum(yobs[saemix.data["data"][,"ytype"] %in% idx.exp]))
+#	if(saemix.model["error.model"]=="exponential")
+#		log.const<-(-sum(yobs))
 	IdM<-rep(c(0:(MM-1)),each=saemix.data["ntot.obs"])*saemix.data["N"]+ rep(saemix.data["data"][,"index"],MM)
 	yM<-rep(yobs,MM)
-	XM<-matrix(rep(t(xind),MM),ncol=npred, byrow=TRUE)
+	XM<-do.call(rbind,rep(list(xind), MM))
 	
 	io<-matrix(0,nrow=saemix.data["N"],ncol=max(saemix.data["nind.obs"]))
 	for(isuj in 1:saemix.data["N"])
@@ -129,18 +133,17 @@ llis.saemix<-function(saemixObject) {
 		
 		phiM[,i1.omega2]<-phiM1
 		psiM<-transphi(phiM,saemix.model["transform.par"])
+		f<-saemix.model["model"](psiM,IdM,XM)
+		for(i in idx.exp) f[saemix.data["data"][,"ytype"]==i]<-log(cutoff(f[saemix.data["data"][,"ytype"]==i]))
+#		if(saemix.model["error.model"]=="exponential")
+#			f<-log(cutoff(f))
 		if (saemixObject["model"]["type"]=="structural"){
-			f<-saemix.model["model"](psiM,IdM,XM)
-			if(saemix.model["error.model"]=="exponential")
-				f<-log(cutoff(f))
-			g<-error(f,pres)
+			g<-error(f,pres,XM$ytype)
 			DYF[ind.ioM] <- -0.5*((yM-f)/g)**2 - log(g) - 0.5*c1
-			e1<-matrix(colSums(DYF),nrow=saemix.data["N"],ncol=MM)
 		} else {
-			f<-saemix.model["model"](psiM,IdM,XM)
 			DYF[ind.ioM] <- f
-			e1<-matrix(colSums(DYF),nrow=saemix.data["N"],ncol=MM)
 		}
+		e1<-matrix(colSums(DYF),nrow=saemix.data["N"],ncol=MM)
 		sume<-e1+e2-e3
 		newa<-rowMeans(exp(sume),na.rm=TRUE)
 		# ECO 11/05/03: added this line to avoid LL becoming NA due to NaN predicted values
@@ -152,8 +155,7 @@ llis.saemix<-function(saemixObject) {
 	
 	x1<-MM*c(kmin:KM)
 	y1<-(-2)*LL[kmin:KM]
-	if(saemixObject["options"]$print.is) if(sum(!is.na(y1))) try(plot(x1,y1,type="l",xlab="Size of the Monte-Carlo sample", ylab="'-2xLog-Likelihood",main=tit)) else cat("Likelihood cannot be computed by Importance Sampling.\n")
-	
+	if(sum(!is.na(y1))) try(plot(x1,y1,type="l",xlab="Size of the Monte-Carlo sample", ylab="'-2xLog-Likelihood",main=tit)) else cat("Likelihood cannot be computed by Importance Sampling.\n")
 	saemixObject["results"]["LL"]<-c(LL)
 	saemixObject["results"]["ll.is"]<-LL[KM]
 	saemixObject["results"]["aic.is"]<-(-2)*saemixObject["results"]["ll.is"]+ 2*saemixObject["results"]["npar.est"]
@@ -179,9 +181,9 @@ llis.saemix<-function(saemixObject) {
 #' Marc Lavielle.
 #' @seealso
 #' \code{\link{SaemixObject}},\code{\link{saemix}},\code{\link{llis.saemix}}
-#' @references Kuhn E, Lavielle M. Maximum likelihood estimation in nonlinear
-#' mixed effects models. Computational Statistics and Data Analysis 49, 4
-#' (2005), 1020-1038.
+#' @references Comets  E, Lavenu A, Lavielle M. Parameter estimation in nonlinear mixed effect models using saemix, an R implementation of the SAEM algorithm. Journal of Statistical Software 80, 3 (2017), 1-41.
+#' 
+#' Kuhn E, Lavielle M. Maximum likelihood estimation in nonlinear mixed effects models. Computational Statistics and Data Analysis 49, 4 (2005), 1020-1038.
 #' 
 #' Comets E, Lavenu A, Lavielle M. SAEMIX, an R version of the SAEM algorithm.
 #' 20th meeting of the Population Approach Group in Europe, Athens, Greece
@@ -233,7 +235,7 @@ llgq.saemix<-function(saemixObject) {
 	
 	saemix.data<-saemixObject["data"]
 	saemix.res<-saemixObject["results"]
-	xind<-saemix.data["data"][,saemix.data["name.predictors"],drop=FALSE]
+	xind<-saemix.data["data"][,c(saemix.data["name.predictors"],saemix.data["name.cens"],saemix.data["name.mdv"],saemix.data["name.ytype"]),drop=FALSE]
 	yobs<-saemix.data["data"][,saemix.data["name.response"]]
 	
 	i1.omega2<-saemixObject["model"]["indx.omega"]
@@ -263,21 +265,22 @@ llgq.saemix<-function(saemixObject) {
 	a<-(xmin+xmax)/2
 	b<-(xmax-xmin)/2
 	log.const<-0
-	if(saemixObject["model"]["error.model"]=="exponential")
-		log.const<-(-sum(yobs))
+	idx.exp<-which(saemixObject["model"]["error.model"]=="exponential")
+	if(length(idx.exp)>0)
+#	if(saemixObject["model"]["error.model"]=="exponential")
+		log.const<-(-sum(yobs[saemix.data["data"][,"ytype"] %in% idx.exp]))
 	
 	Q<-0
 	for (j in 1:nx) {
 		phi[,i1.omega2] <- a+b*matrix(rep(x[j,],saemix.data["N"]),ncol=nphi1,byrow=TRUE)
 		psi<-transphi(phi,saemixObject["model"]["transform.par"])
-		if (saemixObject["model"]["type"]=="structural"){
+		if(saemixObject["model"]["type"]=="structural"){
 			f<-saemixObject["model"]["model"](psi, saemix.data["data"][,"index"], xind)
-			if(saemixObject["model"]["error.model"]=="exponential")
-				f<-log(cutoff(f))
-			g<-error(f,pres)
+			for(i in idx.exp) f[saemix.data["data"][,"ytype"]==i]<-log(cutoff(f[saemix.data["data"][,"ytype"]==i]))
+			g<-error(f,pres,saemix.data["data"][,"ytype"])
 			DYF[ind.io] <- -0.5*((yobs-f)/g)**2 - log(g)
 			ly<-colSums(DYF)
-		} else{
+		} else {
 			f<-saemixObject["model"]["model"](psi, saemix.data["data"][,"index"], xind)
 			DYF[ind.io] <- f
 			ly<-colSums(DYF)

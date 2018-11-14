@@ -8,7 +8,7 @@
 #' algorithm proposed by Kuhn and Lavielle (see reference). Details of the
 #' algorithm can be found in the pdf file accompanying the package.
 #' 
-#' @name saemixB
+#' @name saemix
 #' @aliases initialiseMainAlgo mstep estep
 #' 
 #' @param model an object of class SaemixModel, created by a call to the
@@ -25,9 +25,9 @@
 #' @seealso \code{\link{SaemixData}},\code{\link{SaemixModel}},
 #' \code{\link{SaemixObject}}, \code{\link{saemixControl}},
 #' \code{\link{plot.saemix}}
-#' @references Kuhn E, Lavielle M. Maximum likelihood estimation in nonlinear
-#' mixed effects models. Computational Statistics and Data Analysis 49, 4
-#' (2005), 1020-1038.
+#' @references Comets  E, Lavenu A, Lavielle M. Parameter estimation in nonlinear mixed effect models using saemix, an R implementation of the SAEM algorithm. Journal of Statistical Software 80, 3 (2017), 1-41.
+#' 
+#' Kuhn E, Lavielle M. Maximum likelihood estimation in nonlinear mixed effects models. Computational Statistics and Data Analysis 49, 4 (2005), 1020-1038.
 #' 
 #' Comets E, Lavenu A, Lavielle M. SAEMIX, an R version of the SAEM algorithm.
 #' 20th meeting of the Population Approach Group in Europe, Athens, Greece
@@ -53,9 +53,8 @@
 #' 	  return(ypred)
 #' }
 #' 
-#' saemix.model<-saemixModel(model=model1cpt,
+#' saemix.model<-saemixModel(model=model1cpt,type="structural",
 #'   description="One-compartment model with first-order absorption", 
-#'   type="structural",
 #'   psi0=matrix(c(1.,20,0.5,0.1,0,-0.01),ncol=3, byrow=TRUE,
 #'   dimnames=list(NULL, c("ka","V","CL"))),transform.par=c(1,1,1),
 #'   covariate.model=matrix(c(0,1,0,0,0,0),ncol=3,byrow=TRUE),fixed.estim=c(1,1,1),
@@ -110,7 +109,6 @@ saemix<-function(model,data,control=list()) {
   opt.warn<-getOption("warn")
   if(!saemixObject["options"]$warnings) options(warn=-1)
 
-
   saemix.options<-saemixObject["options"]
   saemix.model<-saemixObject["model"]
   saemix.data<-saemixObject["data"]
@@ -128,7 +126,6 @@ saemix<-function(model,data,control=list()) {
 ############################################
   
 # Initialisation - creating several lists with necessary information extracted (Uargs, Dargs, opt,varList, suffStat)
-
   xinit<-initialiseMainAlgo(saemix.data,saemix.model,saemix.options)
   saemix.model<-xinit$saemix.model
   Dargs<-xinit$Dargs
@@ -141,12 +138,13 @@ saemix<-function(model,data,control=list()) {
   betas<-betas.ini<-xinit$betas
   fixed.psi<-xinit$fixedpsi.ini
   var.eta<-varList$diag.omega
+
   if (Dargs$type=="structural"){
     theta0<-c(fixed.psi,var.eta[Uargs$i1.omega2],varList$pres[Uargs$ind.res])
     parpop<-matrix(data=0,nrow=(saemix.options$nbiter.tot+1),ncol=(Uargs$nb.parameters+length(Uargs$i1.omega2)+length(saemix.model["indx.res"])))
-    colnames(parpop)<-c(saemix.model["name.modpar"], saemix.model["name.random"], saemix.model["name.res"][saemix.model["indx.res"]])
+    colnames(parpop)<-c(saemix.model["name.modpar"], saemix.model["name.random"], saemix.model["name.sigma"][saemix.model["indx.res"]])
     allpar<-matrix(data=0,nrow=(saemix.options$nbiter.tot+1), ncol=(Uargs$nb.betas+length(Uargs$i1.omega2)+length(saemix.model["indx.res"])))
-    colnames(allpar)<-c(saemix.model["name.fixed"],saemix.model["name.random"], saemix.model["name.res"][saemix.model["indx.res"]])
+    colnames(allpar)<-c(saemix.model["name.fixed"],saemix.model["name.random"], saemix.model["name.sigma"][saemix.model["indx.res"]])
   } else{
     theta0<-c(fixed.psi,var.eta[Uargs$i1.omega2])
     parpop<-matrix(data=0,nrow=(saemix.options$nbiter.tot+1),ncol=(Uargs$nb.parameters+length(Uargs$i1.omega2)))
@@ -154,7 +152,7 @@ saemix<-function(model,data,control=list()) {
     allpar<-matrix(data=0,nrow=(saemix.options$nbiter.tot+1), ncol=(Uargs$nb.betas+length(Uargs$i1.omega2)))
     colnames(allpar)<-c(saemix.model["name.fixed"],saemix.model["name.random"])
   }
-
+  
   parpop[1,]<-theta0
   allpar[1,]<-xinit$allpar0
   
@@ -201,8 +199,7 @@ for (kiter in 1:saemix.options$nbiter.tot) { # Iterative portion of algorithm
   }
 
 	# E-step
-  
-  xmcmc<-estep(kiter, Uargs, Dargs, opt, structural.model, mean.phi, varList, DYF, phiM,saemixObject)
+  xmcmc<-estep(kiter, Uargs, Dargs, opt, structural.model, mean.phi, varList, DYF, phiM)
   varList<-xmcmc$varList
   DYF<-xmcmc$DYF
   phiM<-xmcmc$phiM
@@ -225,29 +222,28 @@ for (kiter in 1:saemix.options$nbiter.tot) { # Iterative portion of algorithm
   	l1<-betas.ini
   	l1[Uargs$indx.betaI]<-fixed.psi
   	l1[Uargs$indx.betaC]<-betaC
-     if(Dargs$type=="structural") {
+
+    if(Dargs$type=="structural") {
       allpar[(kiter+1),]<-c(l1,var.eta[Uargs$i1.omega2],varList$pres[Uargs$ind.res])
     } else{
       allpar[(kiter+1),]<-c(l1,var.eta[Uargs$i1.omega2])
     }
+
   } else { #end of loop on if (stepsize[kiter]>0)
     allpar[(kiter+1),]<-allpar[kiter,]
   }
-     if(Dargs$type=="structural") {
+   if(Dargs$type=="structural") {
       theta<-c(fixed.psi,var.eta[Uargs$i1.omega2],varList$pres[Uargs$ind.res])
     } else{
       theta<-c(fixed.psi,var.eta[Uargs$i1.omega2])
     }
-
   parpop[(kiter+1),]<-theta
+
 # End of loop on kiter
 }
-
-
 etaM<-xmcmc$etaM # only need etaM here (re-created in estep otherwise)
 cat("\n    Minimisation finished\n")
 print(date())
-
 ############# After end of iterations
 fixed.effects<-0*betas
 fixed.effects[Uargs$indx.betaI]<-fixed.psi
@@ -283,9 +279,9 @@ cond.mean.eta<-t(apply(cond.mean.eta,c(1,2),mean))
 
 # Filling in result object
   if(Dargs$type=="structural") {
-    saemix.res<-new(Class="SaemixRes",name.fixed=saemix.model["name.fixed"], name.random=saemix.model["name.random"],name.res=saemix.model["name.res"], fixed.effects=c(fixed.effects),fixed.psi=c(fixed.psi),betas=betas,betaC=betaC, omega=varList$omega,respar=varList$pres,cond.mean.phi=cond.mean.phi,cond.var.phi=cond.var.phi, mean.phi=mean.phi, phi=phi,phi.samp=phi.samp,parpop=parpop,allpar=allpar,MCOV=varList$MCOV,modeltype="structural")
-  }else{
-    saemix.res<-new(Class="SaemixRes",name.fixed=saemix.model["name.fixed"], name.random=saemix.model["name.random"],name.res=saemix.model["name.res"], fixed.effects=c(fixed.effects),fixed.psi=c(fixed.psi),betas=betas,betaC=betaC, omega=varList$omega,cond.mean.phi=cond.mean.phi,cond.var.phi=cond.var.phi, mean.phi=mean.phi, phi=phi,phi.samp=phi.samp,parpop=parpop,allpar=allpar,MCOV=varList$MCOV,modeltype="likelihood")
+    saemix.res<-new(Class="SaemixRes",modeltype=Dargs$type,name.fixed=saemix.model["name.fixed"], name.random=saemix.model["name.random"],name.sigma=saemix.model["name.sigma"], fixed.effects=c(fixed.effects),fixed.psi=c(fixed.psi),betas=betas,betaC=betaC, omega=varList$omega,respar=varList$pres,cond.mean.phi=cond.mean.phi,cond.var.phi=cond.var.phi, mean.phi=mean.phi, phi=phi,phi.samp=phi.samp,parpop=parpop,allpar=allpar,MCOV=varList$MCOV)
+  } else{
+    saemix.res<-new(Class="SaemixRes",modeltype=Dargs$type,name.fixed=saemix.model["name.fixed"], name.random=saemix.model["name.random"],name.sigma=saemix.model["name.sigma"], fixed.effects=c(fixed.effects),fixed.psi=c(fixed.psi),betas=betas,betaC=betaC, omega=varList$omega,cond.mean.phi=cond.mean.phi,cond.var.phi=cond.var.phi, mean.phi=mean.phi, phi=phi,phi.samp=phi.samp,parpop=parpop,allpar=allpar,MCOV=varList$MCOV)
   }
   saemix.res["indx.res"]<-Uargs$ind.res
   saemix.res["indx.fix"]<-Uargs$indx.betaI
@@ -304,11 +300,9 @@ cond.mean.eta<-t(apply(cond.mean.eta,c(1,2),mean))
 # ECO TODO check
 # a la fin: mais verifier, pe pb de distribution ??? ie allpar sur l'echelle des betas et pas parpop ? a verifier
 # saemix.res["allpar"]<-allpar
-# saemix.res["parpop"]<-allpar[,-c(Uargs$indx.betaC)]
-
+# saemix.res["parpop"]<-allpar[,-c(indx.betaC)]
 #### Final computations
 # Compute the MAP estimates of the PSI_i's 
-
   if(saemix.options$map) saemixObject<-map.saemix(saemixObject)
 
 # Compute the Fisher Information Matrix & update saemix.res
@@ -317,7 +311,7 @@ cond.mean.eta<-t(apply(cond.mean.eta,c(1,2),mean))
 # Estimate the log-likelihood via importance Sampling/Gaussian quadrature
   if(saemix.options$ll.is) saemixObject<-llis.saemix(saemixObject)
   if(saemix.options$ll.gq) saemixObject<-llgq.saemix(saemixObject)
-  
+
 #### Pretty printing the results (TODO finish in particular cov2cor)
   if(saemix.options$print) print(saemixObject,digits=2)
 
@@ -343,7 +337,6 @@ cond.mean.eta<-t(apply(cond.mean.eta,c(1,2),mean))
        }
      }
    }
-
   if(saemix.options$save) {
     namres<-ifelse(saemix.options$directory=="","pop_parameters.txt", file.path(saemix.options$directory,"pop_parameters.txt"))
     xtry<-try(sink(namres))
@@ -357,7 +350,6 @@ cond.mean.eta<-t(apply(cond.mean.eta,c(1,2),mean))
        cat("Unable to save results, check writing permissions and/or path to directory.\n")
      }
   }
-
 # ECO TODO finish, adding all
   if(saemix.options$save.graphs) {
     saemixObject<-saemix.predict(saemixObject)
@@ -385,6 +377,7 @@ cond.mean.eta<-t(apply(cond.mean.eta,c(1,2),mean))
 #    default.saemix.plots(saemixObject)
 
     dev.off()
+    
     if(saemix.options$directory=="") namgr<-"individual_fits.ps" else
       namgr<-file.path(saemix.options$directory,"individual_fits.ps")
     postscript(namgr,horizontal=FALSE)
@@ -396,6 +389,5 @@ cond.mean.eta<-t(apply(cond.mean.eta,c(1,2),mean))
   }
 
   options(warn=opt.warn)
-
   return(saemixObject)
 }

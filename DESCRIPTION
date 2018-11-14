@@ -1,4 +1,4 @@
-Package: saemixB
+Package: saemixextension
 Title: Stochastic Approximation Expectation Maximization (SAEM) Algorithm
 Description: Implements the Stochastic Approximation EM algorithm 
 Version: 0.1

@@ -6,7 +6,6 @@
 \alias{fitted.SaemixRes}
 \alias{fitted}
 \alias{fitted.SaemixObject}
-\alias{fitted.SaemixObject}
 \title{Extract Model Predictions}
 \usage{
 \method{fitted}{SaemixRes}(object, type = c("ipred", "ypred", "ppred",

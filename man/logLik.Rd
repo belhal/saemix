@@ -6,8 +6,6 @@
 \alias{logLik.SaemixObject}
 \alias{AIC.SaemixObject}
 \alias{BIC.SaemixObject}
-\alias{AIC.SaemixObject}
-\alias{BIC.SaemixObject}
 \title{Extract likelihood from a saemixObject resulting from a call to saemix}
 \usage{
 \method{logLik}{SaemixObject}(object, method = "is", ...)
@@ -34,6 +32,8 @@ If no method argument is given, this function will attempt to extract the likeli
 If the requested likelihood is not present in the object, it will be computed and aded to the object before returning.
 }
 \references{
+Comets  E, Lavenu A, Lavielle M. Parameter estimation in nonlinear mixed effect models using saemix, an R implementation of the SAEM algorithm. Journal of Statistical Software 80, 3 (2017), 1-41.
+
 Kuhn E, Lavielle M. Maximum likelihood estimation in nonlinear mixed effects models. Computational Statistics and Data Analysis 49, 4 (2005), 1020-1038.
 
 Comets E, Lavenu A, Lavielle M. SAEMIX, an R version of the SAEM algorithm. 20th meeting of the Population Approach Group in Europe, Athens, Greece (2011), Abstr 2173.

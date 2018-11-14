@@ -17,6 +17,7 @@ An object of the SaemixData class, representing a longitudinal data structure, u
 @slot header Object of class \code{"logical"}: whether the dataset/file contains a header. Defaults to TRUE 
 @slot sep Object of class \code{"character"}: the field separator character
 @slot na Object of class \code{"character"}: a character vector of the strings which are to be interpreted as NA values
+@slot messages Object of class \code{"logical"}: if TRUE, the program will display information about the creation of the data object
 @slot name.group Object of class \code{"character"}: name of the column containing the subject id
 @slot name.predictors Object of class \code{"character"}: name of the column(s) containing the predictors
 @slot name.response Object of class \code{"character"}: name of the column containing the response variable y modelled by predictor(s) x
@@ -81,6 +82,8 @@ saemix.data<-saemixData(name.data=PD1.saemix,header=TRUE,
 
 }
 \references{
+Comets  E, Lavenu A, Lavielle M. Parameter estimation in nonlinear mixed effect models using saemix, an R implementation of the SAEM algorithm. Journal of Statistical Software 80, 3 (2017), 1-41.
+
 Kuhn E, Lavielle M. Maximum likelihood estimation in nonlinear mixed effects models. Computational Statistics and Data Analysis 49, 4 (2005), 1020-1038.
 
 Comets E, Lavenu A, Lavielle M. SAEMIX, an R version of the SAEM algorithm. 20th meeting of the Population Approach Group in Europe, Athens, Greece (2011), Abstr 2173.

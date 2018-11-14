@@ -5,25 +5,31 @@
 \alias{psi-methods}
 \alias{phi-methods}
 \alias{eta-methods}
+\alias{phi}
+\alias{eta}
 \alias{psi,SaemixObject-method}
-\alias{psi,SaemixObject-method}
+\alias{psi}
 \alias{phi,SaemixObject-method}
 \alias{eta,SaemixObject-method}
 \title{Functions to extract the individual estimates of the parameters and random
 effects}
 \usage{
-psi(object, type = c("map", "mode"))
+psi(object, type = c("mode", "mean"))
 
-\S4method{psi}{SaemixObject}(object, type = c("map", "mode"))
+phi(object, type = c("mode", "mean"))
 
-\S4method{phi}{SaemixObject}(object, type = c("map", "mode"))
+eta(object, type = c("mode", "mean"))
 
-\S4method{eta}{SaemixObject}(object, type = c("map", "mode"))
+\S4method{psi}{SaemixObject}(object, type = c("mode", "mean"))
+
+\S4method{phi}{SaemixObject}(object, type = c("mode", "mean"))
+
+\S4method{eta}{SaemixObject}(object, type = c("mode", "mean"))
 }
 \arguments{
 \item{object}{an SaemixObject object returned by the \code{\link{saemix}} function}
 
-\item{type}{a string specifying whether to use the MAP (type="map") or the mode (type="mode") of the conditional distribution of the individual parameters. Defaults to "map"}
+\item{type}{a string specifying whether to use the MAP (type="mode") or the mean (type="mean") of the conditional distribution of the individual parameters. Defaults to mode}
 }
 \value{
 a matrix with the individual parameters (psi/phi) or the random effects (eta). 
@@ -88,12 +94,12 @@ saemix.options<-list(algorithm=c(1,0,0),seed=632545,save=FALSE,save.graphs=FALSE
 
 # psi(saemix.fit)
 # phi(saemix.fit)
-# eta(saemix.fit,indiv.par="eap")
+# eta(saemix.fit,type="mean")
 }
 \references{
-Kuhn E, Lavielle M. Maximum likelihood estimation in nonlinear
-mixed effects models. Computational Statistics and Data Analysis 49, 4
-(2005), 1020-1038.
+Comets  E, Lavenu A, Lavielle M. Parameter estimation in nonlinear mixed effect models using saemix, an R implementation of the SAEM algorithm. Journal of Statistical Software 80, 3 (2017), 1-41.
+
+Kuhn E, Lavielle M. Maximum likelihood estimation in nonlinear mixed effects models. Computational Statistics and Data Analysis 49, 4 (2005), 1020-1038.
 
 Comets E, Lavenu A, Lavielle M. SAEMIX, an R version of the SAEM algorithm.
 20th meeting of the Population Approach Group in Europe, Athens, Greece

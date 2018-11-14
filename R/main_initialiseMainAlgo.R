@@ -33,6 +33,7 @@ initialiseMainAlgo<-function(saemix.data,saemix.model,saemix.options) {
 	structural.model<-saemix.model["model"]
 	nb.parameters<-saemix.model["nb.parameters"]
 	N<-saemix.data["N"]
+	
 	# Initialising residual error model
 	# error models :
 	#   constant            y = f + a*e
@@ -72,6 +73,7 @@ initialiseMainAlgo<-function(saemix.data,saemix.model,saemix.options) {
 	Mcovariates<-Mcovariates[,j.cov,drop=FALSE] # eliminate all the unused covariates
 	for(icol in dim(Mcovariates)[2])
 		if(is.factor(Mcovariates[,icol])) Mcovariates[,icol]<-as.numeric(Mcovariates[,icol])-1
+	
 	#  if(length(j.cov)==1) {
 	#    betaest.model<-matrix(betaest.model,nrow=1, dimnames=list(c("Fixed"),colnames(saemix.model["betaest.model"])))
 	#    Mcovariates<-matrix(Mcovariates)
@@ -165,7 +167,7 @@ initialiseMainAlgo<-function(saemix.data,saemix.model,saemix.options) {
 	NM<-chdat["NM"]
 	IdM<-chdat["dataM"]$IdM
 	yM<-chdat["dataM"]$yM
-	XM<-chdat["dataM"][,saemix.data["name.predictors"],drop=FALSE]
+	XM<-chdat["dataM"][,c(saemix.data["name.predictors"],saemix.data["name.cens"],saemix.data["name.mdv"],saemix.data["name.ytype"]),drop=FALSE]
 	io<-matrix(data=0,nrow=N,ncol=max(saemix.data["nind.obs"]))
 	for(i in 1:N)
 		io[i,1:saemix.data["nind.obs"][i]]<-1
@@ -236,12 +238,10 @@ initialiseMainAlgo<-function(saemix.data,saemix.model,saemix.options) {
 		l1[indx.betaI]<-transphi(matrix(l1[indx.betaI],nrow=1),saemix.model["transform.par"])
 		allpar0<-c(l1,var.eta[i1.omega2])
 	}
-
-	
 	# Data - passed on to functions, unchanged
 	Dargs<-list(IdM=IdM, XM=XM, yM=yM, NM=NM, N=N, nobs=saemix.data["ntot.obs"],
 							yobs=saemix.data["data"][,saemix.data["name.response"]],transform.par=saemix.model["transform.par"],
-							error.model=saemix.model["error.model"],structural.model=structural.model,type=saemix.model["type"])
+							error.model=saemix.model["error.model"],structural.model=structural.model , etype.exp=which(saemix.model["error.model"] == "exponential"),type=saemix.model["type"])
 	
 	# List of indices and variables (fixed) - passed on to functions, unchanged
 	nb.parest<-sum(covariate.estim)+ sum(saemix.model["covariance.model"][upper.tri(saemix.model["covariance.model"], diag=TRUE)])+1+as.integer(saemix.model["error.model"]=="combined")
@@ -254,7 +254,6 @@ initialiseMainAlgo<-function(saemix.data,saemix.model,saemix.options) {
 				Mcovariates=Mcovariates, ind.ioM=ind.ioM)
 	# Variability-related elements
 	omega.eta<-omega[ind.eta,ind.eta] # IIV matrix for estimated parameters
-	
 	if(saemix.model["type"]=="structural"){
 		varList<-list(pres=pres,ind0.eta=ind0.eta,ind.eta=ind.eta,omega=omega, MCOV=MCOV,
 								domega2=do.call(cbind,rep(list((sqrt(mydiag(omega.eta)))*saemix.options$rw.ini),nb.etas)),diag.omega=mydiag(omega))
@@ -262,7 +261,7 @@ initialiseMainAlgo<-function(saemix.data,saemix.model,saemix.options) {
 		varList<-list(ind0.eta=ind0.eta,ind.eta=ind.eta,omega=omega, MCOV=MCOV,
 								domega2=do.call(cbind,rep(list((sqrt(mydiag(omega.eta)))*saemix.options$rw.ini),nb.etas)),diag.omega=mydiag(omega))
 	}
-	
+
 	# List of options and settings (fixed) - passed on to functions, unchanged
 	stepsize<-rep(1,saemix.options$nbiter.tot)
 	stepsize[(saemix.options$nbiter.saemix[1]+1):saemix.options$nbiter.tot]<-1/

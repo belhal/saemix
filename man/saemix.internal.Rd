@@ -5,6 +5,7 @@
 \alias{.First.lib}
 \alias{plotnpde}
 \alias{ssq}
+\alias{error.typ}
 \title{Internal saemix objects}
 \description{
 Internal saemix objects.

@@ -9,6 +9,8 @@
 \title{Extracts the Variance-Covariance Matrix for a Fitted Model Object}
 \usage{
 \method{vcov}{SaemixRes}(object, ...)
+
+\method{vcov}{SaemixObject}(object, ...)
 }
 \arguments{
 \item{object}{a fitted object from a call to saemix}

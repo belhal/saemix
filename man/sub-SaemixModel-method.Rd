@@ -7,7 +7,16 @@
 \usage{
 \S4method{[}{SaemixModel}(x, i, j, drop)
 }
+\arguments{
+\item{x}{object}
+
+\item{i}{element to be replaced}
+
+\item{j}{element to replace with}
+
+\item{drop}{whether to drop unused dimensions}
+}
 \description{
-Access slots of a SaemixModel using the object["slot"] format
+Access slots of a SaemixModel object using the object["slot"] format
 }
 \keyword{methods}

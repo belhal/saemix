@@ -18,24 +18,15 @@ estep<-function(kiter, Uargs, Dargs, opt, structural.model, mean.phi, varList, D
 	VK<-rep(c(1:nb.etas),2)
 	mean.phiM<-do.call(rbind,rep(list(mean.phi),Uargs$nchains))
 	phiM[,varList$ind0.eta]<-mean.phiM[,varList$ind0.eta]
-
-
-	if(Dargs$type=="structural"){
-		U.y<-compute.LLy_c(phiM,varList$pres,Uargs,Dargs,DYF)
-	} else{
-		U.y <- compute.LLy_d(phiM,Uargs,Dargs,DYF)
-	}
 	
+	U.y<-compute.LLy(phiM,Uargs,Dargs,DYF,varList$pres)
+
 	etaM<-phiM[,varList$ind.eta]-mean.phiM[,varList$ind.eta,drop=FALSE]
 	phiMc<-phiM
 	for(u in 1:opt$nbiter.mcmc[1]) { # 1er noyau
 		etaMc<-matrix(rnorm(Dargs$NM*nb.etas),ncol=nb.etas)%*%chol.omega
 		phiMc[,varList$ind.eta]<-mean.phiM[,varList$ind.eta]+etaMc
-		if(Dargs$type=="structural"){
-			Uc.y<-compute.LLy_c(phiMc,varList$pres,Uargs,Dargs,DYF)
-		} else {
-			Uc.y<-compute.LLy_d(phiMc,Uargs,Dargs,DYF)
-		}
+		Uc.y<-compute.LLy(phiMc,Uargs,Dargs,DYF,varList$pres)
 		deltau<-Uc.y-U.y
 		ind<-which(deltau<(-1)*log(runif(Dargs$NM)))
 		etaM[ind,]<-etaMc[ind,]
@@ -54,12 +45,7 @@ estep<-function(kiter, Uargs, Dargs, opt, structural.model, mean.phi, varList, D
 				#				cat('vk2=',vk2,' nrs2=',nrs2,"\n")
 				etaMc[,vk2]<-etaM[,vk2]+matrix(rnorm(Dargs$NM*nrs2), ncol=nrs2)%*%mydiag(varList$domega2[vk2,nrs2],nrow=1) # 2e noyau ? ou 1er noyau+permutation?
 				phiMc[,varList$ind.eta]<-mean.phiM[,varList$ind.eta]+etaMc
-				psiMc<-transphi(phiMc,Dargs$transform.par)
-				if(Dargs$type=="structural"){
-					Uc.y<-compute.LLy_c(phiMc,varList$pres,Uargs,Dargs,DYF)
-				} else {
-					Uc.y<-compute.LLy_d(phiMc,Uargs,Dargs,DYF)
-				}
+				Uc.y<-compute.LLy(phiMc,Uargs,Dargs,DYF,varList$pres)
 				Uc.eta<-0.5*rowSums(etaMc*(etaMc%*%somega))
 				deltu<-Uc.y-U.y+Uc.eta-U.eta
 				ind<-which(deltu<(-1)*log(runif(Dargs$NM)))
@@ -91,12 +77,7 @@ estep<-function(kiter, Uargs, Dargs, opt, structural.model, mean.phi, varList, D
 				etaMc<-etaM
 				etaMc[,vk2]<-etaM[,vk2]+matrix(rnorm(Dargs$NM*nrs2), ncol=nrs2)%*%mydiag(varList$domega2[vk2,nrs2])
 				phiMc[,varList$ind.eta]<-mean.phiM[,varList$ind.eta]+etaMc
-				psiMc<-transphi(phiMc,Dargs$transform.par)
-				if(Dargs$type=="structural"){
-					Uc.y<-compute.LLy_c(phiMc,varList$pres,Uargs,Dargs,DYF)
-				} else {
-					Uc.y<-compute.LLy_d(phiMc,Uargs,Dargs,DYF)
-				}
+				Uc.y<-compute.LLy(phiMc,Uargs,Dargs,DYF,varList$pres)
 				Uc.eta<-0.5*rowSums(etaMc*(etaMc%*%somega))
 				deltu<-Uc.y-U.y+Uc.eta-U.eta
 				ind<-which(deltu<(-log(runif(Dargs$NM))))
@@ -113,7 +94,6 @@ estep<-function(kiter, Uargs, Dargs, opt, structural.model, mean.phi, varList, D
 		}
 		varList$domega2[,nrs2]<-varList$domega2[,nrs2]*(1+opt$stepsize.rw* (nbc2/nt2-opt$proba.mcmc))
 	}
-
 	phiM[,varList$ind.eta]<-mean.phiM[,varList$ind.eta]+etaM
 	return(list(varList=varList,DYF=DYF,phiM=phiM, etaM=etaM))
 }

@@ -7,8 +7,8 @@
 saemixData(name.data, header, sep, na, name.group, name.predictors,
   name.response, name.X, name.covariates = c(),
   name.genetic.covariates = c(), name.mdv = "", name.cens = "",
-  name.occ = "", name.ytype = "", units = list(x = "", y = "", covariates
-  = c()), verbose = TRUE)
+  name.occ = "", name.ytype = "", units = list(x = "", y = "",
+  covariates = c()), verbose = TRUE)
 }
 \arguments{
 \item{name.data}{name of the dataset (can be a character string giving the name of a file on disk or of a dataset in the R session, or the name of a dataset}
@@ -74,6 +74,8 @@ print(saemix.data)
 plot(saemix.data)
 }
 \references{
+Comets  E, Lavenu A, Lavielle M. Parameter estimation in nonlinear mixed effect models using saemix, an R implementation of the SAEM algorithm. Journal of Statistical Software 80, 3 (2017), 1-41.
+
 Kuhn E, Lavielle M. Maximum likelihood estimation in nonlinear mixed effects models. Computational Statistics and Data Analysis 49, 4 (2005), 1020-1038.
 
 Comets E, Lavenu A, Lavielle M. SAEMIX, an R version of the SAEM algorithm. 20th meeting of the Population Approach Group in Europe, Athens, Greece (2011), Abstr 2173.

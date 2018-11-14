@@ -1,7 +1,5 @@
 ###########################  Individual MAP estimates 	#############################
 
-
-
 #' Estimates of the individual parameters (conditional mode)
 #' 
 #' Compute the estimates of the individual parameters PSI_i (conditional mode -
@@ -16,9 +14,9 @@
 #' @author Emmanuelle Comets <emmanuelle.comets@@inserm.fr>, Audrey Lavenu,
 #' Marc Lavielle.
 #' @seealso \code{\link{SaemixObject}},\code{\link{saemix}}
-#' @references Kuhn E, Lavielle M. Maximum likelihood estimation in nonlinear
-#' mixed effects models. Computational Statistics and Data Analysis 49, 4
-#' (2005), 1020-1038.
+#' @references Comets  E, Lavenu A, Lavielle M. Parameter estimation in nonlinear mixed effect models using saemix, an R implementation of the SAEM algorithm. Journal of Statistical Software 80, 3 (2017), 1-41.
+#' 
+#' Kuhn E, Lavielle M. Maximum likelihood estimation in nonlinear mixed effects models. Computational Statistics and Data Analysis 49, 4 (2005), 1020-1038.
 #' 
 #' Comets E, Lavenu A, Lavielle M. SAEMIX, an R version of the SAEM algorithm.
 #' 20th meeting of the Population Approach Group in Europe, Athens, Greece
@@ -46,7 +44,6 @@
 #' 
 #' saemix.model<-saemixModel(model=model1cpt,
 #'   description="One-compartment model with first-order absorption", 
-#'   type="structural",
 #'   psi0=matrix(c(1.,20,0.5,0.1,0,-0.01),ncol=3, byrow=TRUE,
 #'   dimnames=list(NULL, c("ka","V","CL"))),transform.par=c(1,1,1),
 #'   covariate.model=matrix(c(0,1,0,0,0,0),ncol=3,byrow=TRUE),fixed.estim=c(1,1,1),
@@ -70,11 +67,11 @@ map.saemix<-function(saemixObject) {
   i1.omega2<-saemixObject["model"]["indx.omega"]
   iomega.phi1<-solve(saemixObject["results"]["omega"][i1.omega2,i1.omega2])
   id<-saemixObject["data"]["data"][,saemixObject["data"]["name.group"]]
-  xind<-saemixObject["data"]["data"][,saemixObject["data"]["name.predictors"], drop=FALSE]
+  xind<-saemixObject["data"]["data"][,c(saemixObject["data"]["name.predictors"],saemixObject["data"]["name.cens"],saemixObject["data"]["name.mdv"],saemixObject["data"]["name.ytype"]),drop=FALSE]
   yobs<-saemixObject["data"]["data"][,saemixObject["data"]["name.response"]]
   id.list<-unique(id)
   phi.map<-saemixObject["results"]["phi"]
-  saemix.options <- saemixObject["options"]
+  
   cat("Estimating the individual parameters, please wait a few moments...\n")
   for(i in 1:saemixObject["data"]["N"]) {
     cat(".")
@@ -88,10 +85,9 @@ map.saemix<-function(saemixObject) {
     phi1<-phii[i1.omega2]
     if(saemixObject["model"]["type"]=="structural"){
       phi1.opti<-optim(par=phi1, fn=conditional.distribution_c, phii=phii,idi=idi,xi=xi,yi=yi,mphi=mean.phi1,idx=i1.omega2,iomega=iomega.phi1, trpar=saemixObject["model"]["transform.par"], model=saemixObject["model"]["model"], pres=saemixObject["results"]["respar"], err=saemixObject["model"]["error.model"])
-    } else{
+    } else {
       phi1.opti<-optim(par=phi1, fn=conditional.distribution_d, phii=phii,idi=idi,xi=xi,yi=yi,mphi=mean.phi1,idx=i1.omega2,iomega=iomega.phi1, trpar=saemixObject["model"]["transform.par"], model=saemixObject["model"]["model"])
     }
-    
     phi.map[i,i1.omega2]<-phi1.opti$par
   }
   cat("\n")
@@ -220,35 +216,6 @@ compute.sres<-function(saemixObject) {
 }
 
 ###########################	Computational fcts	#############################
-# Redefining diag function, too many problems with the R version
-mydiag <- function (x = 1, nrow, ncol) {
-	if (is.matrix(x)) {
-		if (nargs() > 1L) 
-			stop("'nrow' or 'ncol' cannot be specified when 'x' is a matrix")
-		if ((m <- min(dim(x))) == 0L) 
-			return(vector(typeof(x), 0L))
-		y <- c(x)[1L + 0L:(m - 1L) * (dim(x)[1L] + 1L)]
-		nms <- dimnames(x)
-		if (is.list(nms) && !any(sapply(nms, is.null)) && identical((nm <- nms[[1L]][seq_len(m)]), 
-																																nms[[2L]][seq_len(m)])) 
-			names(y) <- nm
-		return(y)
-	}
-	if (is.array(x) && length(dim(x)) != 1L) 
-		stop("'x' is an array, but not 1D.")
-	if (missing(x)) 
-		n <- nrow
-	else n <- length(x)
-	if (!missing(nrow)) 
-		n <- nrow
-	if (missing(ncol)) 
-		ncol <- n
-	p <- ncol
-	y <- array(0, c(n, p))
-	if ((m <- min(n, p)) > 0L) 
-		y[1L + 0L:(m - 1L) * (n + 1L)] <- x
-	y
-}
 
 cutoff<-function(x,seuil=.Machine$double.xmin) {x[x<seuil]<-seuil; return(x)}
 cutoff.max<-function(x) max(x,.Machine$double.xmin)
@@ -262,15 +229,36 @@ norminv<-function(x,mu=0,sigma=1)  mu-sigma*qnorm(x,lower.tail=FALSE)
 normcdf<-function(x,mu=0,sigma=1)
   cutoff(pnorm(-(x-mu)/sigma,lower.tail=FALSE),1e-30)
 
-error<-function(f,ab,type="combined") {
+error<-function(f,ab,etype) { # etype: error model
+  g<-f
+  for(ityp in sort(unique(etype))) {
+    g[etype==ityp]<-error.typ(f[etype==ityp],ab[((ityp-1)*2+1):(ityp*2)])
+  }
+  return(g)
+}
+error.typ<-function(f,ab) {
   g<-cutoff(ab[1]+ab[2]*abs(f))
   return(g)
 }
 
-ssq<-function(ab,y,f) { # Sum of squares
-	g<-abs(ab[1]+ab[2]*f)
-	e<-sum(((y-f)/g)**2+2*log(g))
-	return(e)
+# ssq<-function(ab,y,f) { # Sum of squares
+# 	g<-abs(ab[1]+ab[2]*f)
+# 	e<-sum(((y-f)/g)**2+2*log(g))
+# 	return(e)
+# }
+# ssq<-function(ab,y,f,ytype) { # Sum of squares
+#   g<-f
+#   for(ityp in sort(unique(ytype))) {
+#     g[ytype==ityp]<-(ab[((ityp-1)*2+1)]+f[ytype==ityp]*ab[(ityp*2)])**2
+#   }
+#   e<-sum(((y-f)**2/g)+log(g))
+#   return(e)
+# }
+
+ssq<-function(ab,y,f,etype) { # Sum of squares; need to put ab first as these parameters are optimised by optim
+  g<-(error(f,ab,etype))
+  e<-sum(((y-f)**2/g**2)+2*log(g))
+  return(e)
 }
 
 transpsi<-function(psi,tr) {
@@ -330,51 +318,41 @@ dtransphi<-function(phi,tr) {
   return(dpsi)
 }
 
-compute.Uy_c<-function(b0,phiM,pres,args,Dargs,DYF) {
+
+compute.Uy<-function(b0,phiM,pres,args,Dargs,DYF) {
 # Attention, DYF variable locale non modifiee en dehors
   args$MCOV0[args$j0.covariate]<-b0
   phi0<-args$COV0 %*% args$MCOV0
   phiM[,args$i0.omega2]<-do.call(rbind,rep(list(phi0),args$nchains))
   psiM<-transphi(phiM,Dargs$transform.par)
-  fpred<-Dargs$structural.model(psiM,Dargs$IdM,Dargs$XM)
-  if(Dargs$error.model=="exponential")
-     fpred<-log(cutoff(fpred))
-  gpred<-error(fpred,pres)
-  DYF[args$ind.ioM]<-0.5*((Dargs$yM-fpred)/gpred)**2+log(gpred)
+  if (Dargs$type=="structural"){
+    fpred<-Dargs$structural.model(psiM,Dargs$IdM,Dargs$XM)
+    for(ityp in Dargs$etype.exp) fpred[Dargs$XM$ytype==ityp]<-log(cutoff(fpred[Dargs$XM$ytype==ityp]))
+    gpred<-error(fpred,pres,Dargs$XM$ytype)
+    DYF[args$ind.ioM]<-0.5*((Dargs$yM-fpred)/gpred)**2+log(gpred)
+  } else {
+    fpred<-Dargs$structural.model(psiM,Dargs$IdM,Dargs$XM)
+    for(ityp in Dargs$etype.exp) fpred[Dargs$XM$ytype==ityp]<-log(cutoff(fpred[Dargs$XM$ytype==ityp]))
+    DYF[args$ind.ioM]<- -fpred
+  }
   U<-sum(DYF)
   return(U)
 }
 
-compute.Uy_d<-function(b0,phiM,args,Dargs,DYF) {
-# Attention, DYF variable locale non modifiee en dehors
-  args$MCOV0[args$j0.covariate]<-b0
-  phi0<-args$COV0 %*% args$MCOV0
-  phiM[,args$i0.omega2]<-do.call(rbind,rep(list(phi0),args$nchains))
+compute.LLy<-function(phiM,args,Dargs,DYF,pres) {
   psiM<-transphi(phiM,Dargs$transform.par)
   fpred<-Dargs$structural.model(psiM,Dargs$IdM,Dargs$XM)
-  DYF[args$ind.ioM]<- fpred
-  U<-sum(DYF)
-  return(U)
-}
-
-compute.LLy_c<-function(phiM,pres,args,Dargs,DYF) {
-  psiM<-transphi(phiM,Dargs$transform.par)
-  fpred<-Dargs$structural.model(psiM,Dargs$IdM,Dargs$XM)
-  if(Dargs$error.model=="exponential")
-     fpred<-log(cutoff(fpred))
-  gpred<-error(fpred,pres)
-  DYF[args$ind.ioM]<-0.5*((Dargs$yM-fpred)/gpred)**2+log(gpred)
+  for(ityp in Dargs$etype.exp) fpred[Dargs$XM$ytype==ityp]<-log(cutoff(fpred[Dargs$XM$ytype==ityp]))
+  if (Dargs$type=="structural"){
+    gpred<-error(fpred,pres,Dargs$XM$ytype)
+    DYF[args$ind.ioM]<-0.5*((Dargs$yM-fpred)/gpred)**2+log(gpred)
+  } else {
+    DYF[args$ind.ioM]<- -fpred
+  }
   U<-colSums(DYF)
   return(U)
 }
 
-compute.LLy_d<-function(phiM,args,Dargs,DYF) {
-  psiM<-transphi(phiM,Dargs$transform.par)
-  fpred<-Dargs$structural.model(psiM, Dargs$IdM, Dargs$XM)
-  DYF[args$ind.ioM]<- -log(fpred)
-  U<-colSums(DYF)
-  return(U)
-}
 
 
 conditional.distribution_c<-function(phi1,phii,idi,xi,yi,mphi,idx,iomega,trpar,model,pres,err) {
@@ -382,9 +360,9 @@ conditional.distribution_c<-function(phi1,phii,idi,xi,yi,mphi,idx,iomega,trpar,m
   psii<-transphi(matrix(phii,nrow=1),trpar)
   if(is.null(dim(psii))) psii<-matrix(psii,nrow=1)
   fi<-model(psii,idi,xi)
-  if(err=="exponential")
-    fi<-log(cutoff(fi))
-  gi<-error(fi,pres)      #    cutoff((pres[1]+pres[2]*abs(fi)))
+  ind.exp<-which(err=="exponential")
+  for(ityp in ind.exp) fi[xi$ytype==ityp]<-log(cutoff(fi[xi$ytype==ityp]))
+  gi<-error(fi,pres,xi$ytype)      #    cutoff((pres[1]+pres[2]*abs(fi)))
   Uy<-sum(0.5*((yi-fi)/gi)**2+log(gi))
   dphi<-phi1-mphi
   Uphi<-0.5*sum(dphi*(dphi%*%iomega))

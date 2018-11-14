@@ -62,9 +62,9 @@ saemix.options<-list(algorithm=c(1,0,0),seed=632545,
 
 }
 \references{
-Kuhn E, Lavielle M. Maximum likelihood estimation in nonlinear
-mixed effects models. Computational Statistics and Data Analysis 49, 4
-(2005), 1020-1038.
+Comets  E, Lavenu A, Lavielle M. Parameter estimation in nonlinear mixed effect models using saemix, an R implementation of the SAEM algorithm. Journal of Statistical Software 80, 3 (2017), 1-41.
+
+Kuhn E, Lavielle M. Maximum likelihood estimation in nonlinear mixed effects models. Computational Statistics and Data Analysis 49, 4 (2005), 1020-1038.
 
 Comets E, Lavenu A, Lavielle M. SAEMIX, an R version of the SAEM algorithm.
 20th meeting of the Population Approach Group in Europe, Athens, Greece

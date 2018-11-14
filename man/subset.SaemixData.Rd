@@ -5,6 +5,9 @@
 \alias{subset-methods}
 \alias{subset}
 \title{Data subsetting}
+\usage{
+\method{subset}{SaemixData}(x, subset, ...)
+}
 \arguments{
 \item{x}{saemixData object}
 
