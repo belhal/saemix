@@ -304,7 +304,7 @@ cond.mean.eta<-t(apply(cond.mean.eta,c(1,2),mean))
 #### Final computations
 # Compute the MAP estimates of the PSI_i's 
   if(saemix.options$map) saemixObject<-map.saemix(saemixObject)
-
+  
 # Compute the Fisher Information Matrix & update saemix.res
   if(saemix.options$fim) saemixObject<-fim.saemix(saemixObject)
 
