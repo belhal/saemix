@@ -131,7 +131,7 @@ setClass(
 #' below).
 #' @param description a character string, giving a brief description of the
 #' model or the analysis
-#' @param type a character string, giving the type of the model for the analysis
+#' @param type a character string, giving the type of the model for the analysis (structural or likelihood)
 #' @param psi0 a matrix with a number of columns equal to the number of
 #' parameters in the model, and one (when no covariates are available) or two
 #' (when covariates enter the model) giving the initial estimates for the fixed

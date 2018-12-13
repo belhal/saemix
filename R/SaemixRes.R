@@ -16,7 +16,7 @@
 #' 
 #' @section Objects from the Class: 
 #' An object of the SaemixData class can be created by using the function \code{\link{saemixData}} and contain the following slots:
-#' @slot modeltype string giving the type of model used for analysis
+#' @slot modeltype string giving the type of model used for analysis (structural or likelihood)
 #' @slot name.fixed a vector containing the names of the fixed parameters in the model
 #' @slot name.random a vector containing the names of the random parameters in the model
 #' @slot name.sigma a vector containing the names of the parameters of the residual error model
@@ -106,7 +106,7 @@
 setClass(
   Class="SaemixRes",
   representation=representation(
-    modeltype="character", # string giving the type of the model used for analysis
+    modeltype="character", # string giving the type of model used for analysis (structural or likelihood)
     name.fixed="character", # names of fixed parameters in the model
     name.random="character",    # names of random effects
     name.sigma="character", # names of parameters of residual error model
@@ -178,7 +178,7 @@ setClass(
 # initialize
 
 #' @rdname initialize-methods
-#' @param modeltype a character string  giving the model used for analysis
+#' @param modeltype a character string  giving the model used for analysis (structural or likelihood)
 #' @param name.fixed a character string  giving the name of the fixed parameters
 #' @param name.random a character string  giving the name of the random parameters
 #' @param fixed.effects vector with the estimates of h(mu) and betas in estimation order

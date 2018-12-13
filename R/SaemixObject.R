@@ -203,7 +203,6 @@ setMethod(
 #' 
 #' These elements are used in subsequent functions and are not meant to be used
 #' directly.
-#' 
 #' @param map a boolean specifying whether to estimate the individual parameters (MAP estimates). Defaults to TRUE
 #' @param fim a boolean specifying whether to estimate the Fisher Information Matrix and derive the estimation errors 
 #' for the parameters. Defaults to TRUE. The linearised approximation to the log-likelihood is also computed in the process
@@ -220,6 +219,7 @@ setMethod(
 #' @param rw.init initial variance parameters for kernels. Defaults to 0.5
 #' @param alpha.sa parameter controlling cooling in the Simulated Annealing
 #' algorithm. Defaults to 0.97
+#' @param modeltype string giving the type of model used for analysis (structural or likelihood)
 #' @param fix.seed TRUE (default) to use a fixed seed for the random number
 #' generator. When FALSE, the random number generator is initialised using a
 #' new seed, created from the current time.  Hence, different sessions started
