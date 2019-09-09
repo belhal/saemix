@@ -1,3 +1,7 @@
+Version 3.1 -  September 2019
+o Extension to noncontinuous data models
+   * New argument in saemixModel to differentiate between continuous (type = structural) and noncontinuous (type = likelihood)
+
 Version 2.2 -  October 2018
 
  o Bugfixes
